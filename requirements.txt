@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+pydantic
+pydantic_settings
+requests
+openai
+langchain-community
+langchain
+langchainhub
