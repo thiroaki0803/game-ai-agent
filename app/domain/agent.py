@@ -1,8 +1,9 @@
 """AI Agentのドメイン管理とビジネスロジックを管理している
 """
 
-from abc import ABC, abstractmethod
 import logging
+from abc import ABC, abstractmethod
+from collections import deque
 from openai import OpenAI
 from langchain_community.llms import Ollama
 from langchain.callbacks.manager import CallbackManager
@@ -32,6 +33,10 @@ class OpenAIAgent(LLMAgent):
     それぞれにシステムプロンプトや、会話履歴を持っている
     """
 
+    ROLE_SYSTEM = "system"
+    ROLE_USER = "user"
+    ROLE_ASSISTANT = "assistant"
+
     def __init__(self, api_key: str, model_name: str, system_prompt: str) -> None:
         """OpenAIを利用した AI Agentの初期化
 
@@ -49,16 +54,26 @@ class OpenAIAgent(LLMAgent):
 
         :param str prompt: ユーザーから送られたメッセージ
         """
-        # TODO: historiesに履歴を入れて、ユーザーからのメッセージを保存しておく
         # TODO: できれば、RAGなどつけたい
+        # ユーザーからのメッセージを履歴に追加
+        # TODO: 記憶には残せるようになったが、"出題"を確実に履歴に残せるようにしなければならない
+        self.histories.append({"role": self.ROLE_USER, "content": prompt})
+        # 履歴のサイズを制限 (直近の10件)
+        if len(self.histories) > 10:
+            self.histories = self.histories[-10:]
+        # システムプロンプトと履歴を含むメッセージリストを構築
+        messages = [{"role": self.ROLE_SYSTEM, "content": self.system_prompt}]
+        messages.extend(self.histories)
+
         try:
             response = self.client.chat.completions.create(
-                model=self.model_name,
-                messages=[
-                    {"role": "system", "content": self.system_prompt},
-                    {"role": "user", "content": prompt},
-                ],
+                model=self.model_name, messages=messages
             )
+            response_message = {
+                "role": self.ROLE_ASSISTANT,
+                "content": response.choices[0].message.content,
+            }
+            self.histories.append(response_message)
         except Exception as e:
             logger.error("Unexpected error: %s", e)
             raise RuntimeError(f"Unexpected error: {e}") from e
@@ -67,6 +82,15 @@ class OpenAIAgent(LLMAgent):
 
 class OllamaAgent(LLMAgent):
     """ollamaを使ったAI Agent"""
+
+    # クラス変数としてプレフィックスを定義
+    SYSTEM_PREFIX = "[system]\n"
+    USER_PREFIX = "[user]\n"
+    ASSISTANT_PREFIX = "[assistant]\n"
+    SEPARATOR = "\n\n"
+    ROLE_SYSTEM = "system"
+    ROLE_USER = "user"
+    ROLE_ASSISTANT = "assistant"
 
     def __init__(self, base_url: str, model_name: str, system_prompt: str) -> None:
         """OpenAIを利用した AI Agentの初期化
@@ -81,29 +105,28 @@ class OllamaAgent(LLMAgent):
             callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]),
         )
         self.system_prompt = system_prompt
-        self.histories = []
+        # 記憶を直近の10件まで保存
+        self.histories: deque[tuple[str, str]] = deque(maxlen=10)
 
     def get_response(self, prompt: str) -> str:
         """AI からの応答を取得する
 
         :param str prompt: ユーザーから送られたメッセージ
         """
-        # system_promptとユーザーからの投げかけをうまいこと組み合わせる必要がある
-        # TODO: historiesに履歴を入れて、ユーザーからのメッセージを保存しておく
-        # TODO: とりあえず、ローカル変数で格納。構成の整理はしたい
-        system_prefix = "[system]\n"
-        user_prefix = "[user]\n"
-        assistant_prefix = "[assistant]\n"
-        separator = "\n\n"
-        return self.client(
-            system_prefix
-            + self.system_prompt
-            + separator
-            + user_prefix
-            + prompt
-            + separator
-            + assistant_prefix
-        )
+        self.histories.append((self.ROLE_USER, prompt))
+        # Ollamaは文字列のみを渡すため、system_promptとユーザーからの投げかけをうまいこと組み合わせる必要がある
+        # システムプロンプトは記憶から消してはダメなので、毎回初回に追加
+        # TODO: 記憶には残せるようになったが、"出題"を確実に履歴に残せるようにしなければならない
+        full_prompt = self.SYSTEM_PREFIX + self.system_prompt + self.SEPARATOR
+        for role, message in self.histories:
+            if role == self.ROLE_USER:
+                full_prompt += self.USER_PREFIX + message + self.SEPARATOR
+            elif role == self.ROLE_ASSISTANT:
+                full_prompt += self.ASSISTANT_PREFIX + message + self.SEPARATOR
+        response = self.client(full_prompt + self.ASSISTANT_PREFIX)
+        self.histories.append((self.ROLE_ASSISTANT, response))
+        logger.info(full_prompt)
+        return response
 
 
 # Factory クラス
