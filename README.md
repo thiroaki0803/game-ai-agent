@@ -1,34 +1,66 @@
-#  Game Chat Agent
+#  Game AI Agent
 ## 概要
-ゲーム用のチャットボットエージェントを実行するAPI
-ローカルの開発では、基本的にはollamaという、ローカル実行可能なLLMサービスでAPIを立ち上げて任意のモデルで実行させている。
+ゲーム用のチャットボットエージェントを実行するAPI  
+ローカルの開発では、基本的にはollamaという、ローカル実行可能なLLMサービスでAPIを立ち上げて任意のモデルで実行させている。  
 OpenAIのAPIを使って、実行させることも可能。
-## 構成 [WIP]
-## 開発環境の構築[WIP]
-※調査が不足している部分もあるため、アップデート予定。
+## 構成
+### 想定しているシーケンス
+```mermaid
+sequenceDiagram
+    participant Client
+    participant FastAPI
+    participant LLM as LLM (OpenAI or Ollama)
+
+    Client->>FastAPI: WebSocket接続
+    activate FastAPI
+    FastAPI-->>Client: 接続確立
+    
+    loop メッセージ処理
+        Client->>FastAPI: メッセージ送信
+        FastAPI->>LLM: メッセージ処理要求
+        LLM-->>FastAPI: 生成結果
+        FastAPI-->>Client: 処理結果返却
+    end
+    
+    Client->>FastAPI: 切断
+    deactivate FastAPI
+```
+## 開発環境の構築
 ### 前提条件
 - docker がインストールされていること
 - メモリが16GB以上はあること
     - ない場合は、OpenAIのAPIで実行するようにしてください
 - "C:\Users\[ユーザー名]\.wslconfig"にて、Dockerで利用するメモリを12GBまで確保できるようにしておくこと
-    - Macの場合は？(TODO)
+    - Macの場合は『Docker for Desktop』で、「Extensions」-> 「Settings」 -> 「Resources」を開き、「Memory」の欄から変更できる
 - .env.defaultを.envというファイル名でコピーして、必要な値を埋めること
     - OpenAI関連の箇所は、OpenAIを利用しない場合はなくても大丈夫です
 ### 構築手順
-1. docker image のビルドとコンテナの実行
-`docker compose up --build -d`
-2. 利用するモデルをダウンロードする
-まずは、コンテナに入る
-`docker exec -it ollama bash`
-その後、利用したいモデルをダウンロード(https://ollama.com/library)
-`ollama pull llama2`
-Ollamaのコンテナを出る
-`exit`
-3. APIを実行する
-APIのコンテナに入り、スタート用のシェルを実行
-`docker exec -it game-ai-agent sh`
-`cd app`
-`start.sh`
+docker image のビルドとコンテナの実行  
+```
+docker compose up --build -d
+```
+利用するモデルをダウンロードする  
+まずは、ollamaのコンテナに入る  
+```
+docker exec -it ollama bash
+```
+
+その後、利用したいモデルをダウンロード(https://ollama.com/library)  
+```
+ollama pull llama2
+```
+
+Ollamaのコンテナを出る  
+```
+exit
+```
+
+APIのコンテナに入り、スタート用のシェルを実行  
+```
+docker exec -it game-ai-agent sh
+cd app
+start.sh
+```
 
 ### 動作確認
 Postmanなどで、wsに接続確認し、messageの送受信ができればOK
@@ -69,11 +101,9 @@ def func(arg1, arg2):
 
     詳細説明
 
-    :param int 引数(arg1)の名前: 引数(arg1)の説明
+    :param 引数(arg1)の名前: 引数(arg1)の説明
     :param 引数(arg2)の名前: 引数(arg2)の説明
-    :type 引数(arg2)の名前: 引数(arg2)の型
     :return: 戻り値の説明
-    :rtype: 戻り値の型
     :raises 例外の名前: 例外の定義
     """
     value = arg1 + arg2
