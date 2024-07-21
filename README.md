@@ -58,7 +58,7 @@ exit
 APIのコンテナに入り、スタート用のシェルを実行  
 ```
 docker exec -it game-ai-agent sh
-start.sh
+sh start.sh
 ```
 
 ### 動作確認
