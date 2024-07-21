@@ -19,15 +19,26 @@ class LLMAgent(ABC):
 
     @abstractmethod
     def get_response(self, prompt: str) -> str:
-        """
-        LLMモデルに対してプロンプトを入力し、応答を取得する
+        """LLMモデルに対してプロンプトを入力し、応答を取得する
+
+        :param prompt LLMに対しての入力テキスト
         """
 
 
 class OpenAIAgent(LLMAgent):
-    """Open AIを使ったAI Agent"""
+    """Open AIを使ったAI Agent
+
+    ゲームやルームごとに生成されるAI Agent
+    それぞれにシステムプロンプトや、会話履歴を持っている
+    """
 
     def __init__(self, api_key: str, model_name: str, system_prompt: str) -> None:
+        """OpenAIを利用した AI Agentの初期化
+
+        :param api_key OpenAIのAPIKey
+        :param model_name 利用するLLMの名称
+        :param system_prompt ユーザーの役割付けをするためのシステムプロンプト
+        """
         self.model_name = model_name
         self.client = OpenAI(api_key=api_key)
         self.system_prompt = system_prompt
@@ -58,6 +69,12 @@ class OllamaAgent(LLMAgent):
     """ollamaを使ったAI Agent"""
 
     def __init__(self, base_url: str, model_name: str, system_prompt: str) -> None:
+        """OpenAIを利用した AI Agentの初期化
+
+        :param base_url OllamaのAPIが実行されているURL
+        :param model_name 利用するLLMの名称
+        :param system_prompt ユーザーの役割付けをするためのシステムプロンプト
+        """
         self.client = Ollama(
             base_url=base_url,
             model=model_name,
@@ -67,12 +84,16 @@ class OllamaAgent(LLMAgent):
         self.histories = []
 
     def get_response(self, prompt: str) -> str:
+        """AI からの応答を取得する
+
+        :param str prompt: ユーザーから送られたメッセージ
+        """
         # system_promptとユーザーからの投げかけをうまいこと組み合わせる必要がある
         # TODO: historiesに履歴を入れて、ユーザーからのメッセージを保存しておく
         # TODO: とりあえず、ローカル変数で格納。構成の整理はしたい
         system_prefix = "[system]\n"
         user_prefix = "[user]\n"
-        asistant_prefix = "[asistant]\n"
+        assistant_prefix = "[assistant]\n"
         separator = "\n\n"
         return self.client(
             system_prefix
@@ -81,7 +102,7 @@ class OllamaAgent(LLMAgent):
             + user_prefix
             + prompt
             + separator
-            + asistant_prefix
+            + assistant_prefix
         )
 
 
@@ -92,9 +113,20 @@ class AgentFactory:
     """
 
     def __init__(self, config: Settings) -> None:
+        """AI Agentを生成するファクトリークラスの初期化
+
+        :param config 設定ファイルの記載内容
+        """
         self.config = config
 
     def create_agent(self, game_type: GameType, llm_type: LLMType) -> LLMAgent:
+        """AI Agentを生成する
+
+        :param game_type: 実行するゲームのEnum
+        :param llm_type: 利用するLLMのEnum
+        :return LLMAgentの仮想クラスを継承したインスタンス
+        :raises NotImplementedError: game_typeやllm_typeが存在しないエラー
+        """
         # まずは、システムプロンプトを作成
         system_prompt = system_prompts[game_type]
         if system_prompt is None:

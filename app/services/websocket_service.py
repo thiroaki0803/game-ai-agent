@@ -1,3 +1,5 @@
+"""websocket関連のビジネスロジックを記載したサービスクラスを含むモジュール"""
+
 import logging
 from typing import Dict
 from pydantic import ValidationError
@@ -18,12 +20,25 @@ room_id = "YRHJE7tCpDtKzMnJNw3Fk48KVia4kzKU"
 
 
 class WebsocketService:
-    def __init__(self, agent_factory: AgentFactory):
+    """websocket関連のビジネスロジックを記載したサービスクラス"""
+
+    def __init__(self, agent_factory: AgentFactory) -> None:
+        """websocketのサービスクラスの初期化
+
+        :param agent_factory AI Agentを生成するファクトリー
+        """
         self.agent_factory: AgentFactory = agent_factory
         self.agents: Dict[str, LLMAgent] = {}
 
     async def handle_message(self, message: str, connection: Connection) -> None:
-        """message毎に処理の振り分けをハンドリング.json形式で返却する"""
+        """message毎に処理の振り分けをハンドリング.json形式で返却する
+
+        :param message websocket経由で取得したmessage
+        :param websocketのコネクションの管理クラス
+        :raises ValidationError messageが特定のフォーマットに沿わなかったときのエラー
+        :raises NotImplementedError 要求されたAgentが現在の実装に存在しないときのエラー
+        :raises Exception その他エラー
+        """
         logger.info("handle massage start...")
         try:
             base_message = BaseMessage.model_validate_json(message)
@@ -57,7 +72,7 @@ class WebsocketService:
                     await connection.broadcast(f"{res.model_dump_json()}")
                 case MessageType.CHAT:
                     chat_message = ChatMessage.model_validate_json(message)
-                    # TODO: Angentが存在しない場合の処理を追加する
+                    # TODO: Agentが存在しない場合の処理を追加する
                     response_message = self.agents[room_id].get_response(
                         chat_message.message
                     )

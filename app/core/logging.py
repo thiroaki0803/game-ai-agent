@@ -3,7 +3,7 @@
 import logging
 
 
-def setup_logging():
+def setup_logging() -> None:
     """ロギングのセットアップ"""
     logging.basicConfig(
         level=logging.INFO,

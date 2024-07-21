@@ -13,8 +13,12 @@ connection = Connection()
 @api_router.websocket("/ws")
 async def websocket_endpoint(
     websocket: WebSocket, websocket_service=Depends(get_websocket_service)
-):
-    """WebSocket接続用のエンドポイント"""
+) -> None:
+    """WebSocket接続用のエンドポイント
+
+    :param websocket Websocketの操作に必要なライブラリ
+    :param websocket_service Websocket関連のロジックを含むサービスクラス
+    """
     await connection.connect(websocket)
     # youtubeなどでコメントを取得して、何かをしたい場合は、非同期のtaskを作成してウォッチすることが可能
     # asyncio.create_task(communicate_comments(video_id, api_key))
