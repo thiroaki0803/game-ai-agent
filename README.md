@@ -58,7 +58,6 @@ exit
 APIのコンテナに入り、スタート用のシェルを実行  
 ```
 docker exec -it game-ai-agent sh
-cd app
 start.sh
 ```
 
@@ -92,8 +91,6 @@ https://apidog.com/jp/blog/how-to-test-websocket-with-postman/
 - クラスの場合は、何をするクラスなのかの概要、外部に公開するメソッドやインスタンス変数などを記述する。
 - クラスの場合は、冒頭ではdocstringとの間に空行を挟む。
 - 関数の場合は、何をするのかの概要、パラメータ、戻り値、発生する例外などについて記述する。
-
-※ちなみに、現在(2024.07.21)では、ちゃんとコメントつけれていないです。
 #### 関数でのコメント記載例
 ```
 def func(arg1, arg2):
