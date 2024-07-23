@@ -25,6 +25,14 @@ class LLMAgent(ABC):
         :param prompt LLMに対しての入力テキスト
         """
 
+    @abstractmethod
+    def direct(self, directional_prompt: str) -> str:
+        """Agentに指示を出してゲームのテーマを生成し、初回で出題した内容を記憶させる
+
+        :param directional_prompt Agentに出題の指示を出すためのプロンプト
+        :return 初回の指示を受けての回答。基本的にはゲームのテーマや出題となる
+        """
+
 
 class OpenAIAgent(LLMAgent):
     """Open AIを使ったAI Agent
@@ -47,7 +55,26 @@ class OpenAIAgent(LLMAgent):
         self.model_name = model_name
         self.client = OpenAI(api_key=api_key)
         self.system_prompt = system_prompt
+        self.directional_prompt = ""
+        self.theme = ""
         self.histories = []
+
+    def direct(self, directional_prompt: str) -> str:
+        """Agentに指示を出してゲームのテーマを生成し、初回で出題した内容を記憶させる
+
+        :param directional_prompt Agentに出題の指示を出すためのプロンプト
+        :return 初回の指示を受けての回答。基本的にはゲームのテーマや出題となる
+        """
+        self.directional_prompt = directional_prompt
+        response = self.client.chat.completions.create(
+            model=self.model_name,
+            messages=[
+                {"role": self.ROLE_SYSTEM, "content": self.system_prompt},
+                {"role": self.ROLE_USER, "content": directional_prompt},
+            ],
+        )
+        self.theme = response.choices[0].message.content
+        return response.choices[0].message.content
 
     def get_response(self, prompt: str) -> str:
         """AI からの応答を取得する
@@ -56,13 +83,14 @@ class OpenAIAgent(LLMAgent):
         """
         # TODO: できれば、RAGなどつけたい
         # ユーザーからのメッセージを履歴に追加
-        # TODO: 記憶には残せるようになったが、"出題"を確実に履歴に残せるようにしなければならない
         self.histories.append({"role": self.ROLE_USER, "content": prompt})
         # 履歴のサイズを制限 (直近の10件)
         if len(self.histories) > 10:
             self.histories = self.histories[-10:]
-        # システムプロンプトと履歴を含むメッセージリストを構築
+        # システムプロンプト、初回の指示、指示を受けての回答と履歴を含むメッセージリストを構築
         messages = [{"role": self.ROLE_SYSTEM, "content": self.system_prompt}]
+        messages = [{"role": self.ROLE_USER, "content": self.directional_prompt}]
+        messages = [{"role": self.ROLE_ASSISTANT, "content": self.theme}]
         messages.extend(self.histories)
 
         try:
@@ -105,8 +133,26 @@ class OllamaAgent(LLMAgent):
             callback_manager=CallbackManager([StreamingStdOutCallbackHandler()]),
         )
         self.system_prompt = system_prompt
+        self.directional_prompt = ""
+        self.theme = ""
         # 記憶を直近の10件まで保存
         self.histories: deque[tuple[str, str]] = deque(maxlen=10)
+
+    def direct(self, directional_prompt: str) -> str:
+        """Agentに指示を出してゲームのテーマを生成し、初回で出題した内容を記憶させる
+
+        :param directional_prompt Agentに出題の指示を出すためのプロンプト
+        :return 初回の指示を受けての回答。基本的にはゲームのテーマや出題となる
+        """
+        self.directional_prompt = directional_prompt
+        response = self.client(
+            self.SYSTEM_PREFIX
+            + self.system_prompt
+            + self.USER_PREFIX
+            + self.directional_prompt
+        )
+        self.theme = response
+        return response
 
     def get_response(self, prompt: str) -> str:
         """AI からの応答を取得する
@@ -116,8 +162,10 @@ class OllamaAgent(LLMAgent):
         self.histories.append((self.ROLE_USER, prompt))
         # Ollamaは文字列のみを渡すため、system_promptとユーザーからの投げかけをうまいこと組み合わせる必要がある
         # システムプロンプトは記憶から消してはダメなので、毎回初回に追加
-        # TODO: 記憶には残せるようになったが、"出題"を確実に履歴に残せるようにしなければならない
+        # システムプロンプト、初回の指示、指示を受けての回答と履歴を含むメッセージリストを構築
         full_prompt = self.SYSTEM_PREFIX + self.system_prompt + self.SEPARATOR
+        full_prompt += self.USER_PREFIX + self.directional_prompt + self.SEPARATOR
+        full_prompt += self.ASSISTANT_PREFIX + self.theme + self.SEPARATOR
         for role, message in self.histories:
             if role == self.ROLE_USER:
                 full_prompt += self.USER_PREFIX + message + self.SEPARATOR
@@ -176,7 +224,7 @@ class AgentFactory:
 # また、promptも設定ファイルに含めるなど整理したい。
 system_prompts = {
     GameType.TWO_TRUTH_A_LIE: """あなたは「2つの真実と1つの嘘」というゲームの進行役です。
-    あなたの役割は、自分自身または与えられたトピックについて3つの文を生成することです。そのうち2つは真実で、1つは嘘です。以下のガイドラインに従ってください：
+    あなたの役割は、自分自身または自分で考えたトピックについて3つの文を生成することです。そのうち2つは真実で、1つは嘘です。以下のガイドラインに従ってください：
 
     1. 3つの異なる文を生成してください。
     2. 2つの文は真実の事実でなければなりません。
