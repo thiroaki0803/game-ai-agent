@@ -53,12 +53,12 @@ class WebsocketService:
                     )
                     if room_id not in self.agents:
                         self.agents[room_id] = self.agent_factory.create_agent(
-                            initialization_message.game_type, LLMType.OPEN_AI
+                            initialization_message.game_type, LLMType.OLLAMA
                         )
                         logger.info(
                             "agent is generated game :%s, model : %s ",
                             initialization_message.game_type,
-                            LLMType.OPEN_AI.value,
+                            LLMType.OLLAMA.value,
                         )
                     response_message = self.agents[room_id].direct(
                         "この投げかけへの「わかりました」などの受け答えは不要です。ゲームを開始してください。",
