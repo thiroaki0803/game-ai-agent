@@ -13,7 +13,7 @@ class MessageType(str, Enum):
 class GameType(str, Enum):
     """実行するゲームのタイプを指定"""
 
-    TOW_TRUTH_A_LIE = "tow_truth_a_lie"
+    TWO_TRUTH_A_LIE = "two_truth_a_lie"
 
 
 class LLMType(str, Enum):

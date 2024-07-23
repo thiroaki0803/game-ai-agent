@@ -67,7 +67,7 @@ Postmanなどで、wsに接続確認し、messageの送受信ができればOK
     - `ws://localhost:8080/api/ws`
 - massageのサンプル
     - ゲームの開始
-        - `{"message_type":"initialization", "game_type": "tow_truth_a_lie", "sender": "system"}`
+        - `{"message_type":"initialization", "game_type": "two_truth_a_lie", "sender": "system"}`
     - 質問チャット
         - `{"message_type":"chat", "message": "どれが嘘ですか？", "sender": "user1"}`
 #### 参考
