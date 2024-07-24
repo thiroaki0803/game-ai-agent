@@ -60,7 +60,7 @@ class WebsocketService:
                             initialization_message.game_type,
                             LLMType.OLLAMA.value,
                         )
-                    response_message = self.agents[room_id].direct(
+                    response_message = self.agents[room_id].initialize_theme(
                         "この投げかけへの「わかりました」などの受け答えは不要です。ゲームを開始してください。",
                     )
                     res = ResponseChatMessage(

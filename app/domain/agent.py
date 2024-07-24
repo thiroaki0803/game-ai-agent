@@ -26,7 +26,7 @@ class LLMAgent(ABC):
         """
 
     @abstractmethod
-    def direct(self, directional_prompt: str) -> str:
+    def initialize_theme(self, directional_prompt: str) -> str:
         """Agentに指示を出してゲームのテーマを生成し、初回で出題した内容を記憶させる
 
         :param directional_prompt Agentに出題の指示を出すためのプロンプト
@@ -59,7 +59,7 @@ class OpenAIAgent(LLMAgent):
         self.theme = ""
         self.histories = []
 
-    def direct(self, directional_prompt: str) -> str:
+    def initialize_theme(self, directional_prompt: str) -> str:
         """Agentに指示を出してゲームのテーマを生成し、初回で出題した内容を記憶させる
 
         :param directional_prompt Agentに出題の指示を出すためのプロンプト
@@ -138,7 +138,7 @@ class OllamaAgent(LLMAgent):
         # 記憶を直近の10件まで保存
         self.histories: deque[tuple[str, str]] = deque(maxlen=10)
 
-    def direct(self, directional_prompt: str) -> str:
+    def initialize_theme(self, directional_prompt: str) -> str:
         """Agentに指示を出してゲームのテーマを生成し、初回で出題した内容を記憶させる
 
         :param directional_prompt Agentに出題の指示を出すためのプロンプト
