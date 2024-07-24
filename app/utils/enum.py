@@ -8,6 +8,8 @@ class MessageType(str, Enum):
 
     INITIALIZATION = "initialization"
     CHAT = "chat"
+    ANSWER = "answer"
+    RESULT = "result"
 
 
 class GameType(str, Enum):

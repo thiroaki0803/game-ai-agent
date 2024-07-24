@@ -15,12 +15,21 @@ sequenceDiagram
     activate FastAPI
     FastAPI-->>Client: 接続確立
     
+    Client->>FastAPI: ゲーム開始リクエスト
+    FastAPI->>LLM: ゲーム設定生成要求
+    LLM-->>FastAPI: ゲーム設定
+    FastAPI-->>Client: ゲーム開始・初期設定送信
+    
     loop メッセージ処理
         Client->>FastAPI: メッセージ送信
         FastAPI->>LLM: メッセージ処理要求
         LLM-->>FastAPI: 生成結果
         FastAPI-->>Client: 処理結果返却
     end
+    
+    Client->>FastAPI: ゲーム回答送信
+    FastAPI->>FastAPI: 正誤判定
+    FastAPI-->>Client: 判定結果返却
     
     Client->>FastAPI: 切断
     deactivate FastAPI
@@ -67,9 +76,21 @@ Postmanなどで、wsに接続確認し、messageの送受信ができればOK
     - `ws://localhost:8080/api/ws`
 - massageのサンプル
     - ゲームの開始
-        - `{"message_type":"initialization", "game_type": "two_truth_a_lie", "sender": "system"}`
+        - リクエスト
+            - `{"message_type":"initialization", "game_type": "two_truth_a_lie", "sender": "system"}`
+        - レスポンス
+            - `{"message_type":"chat", "message": "ゲームを始めましょう", "sender": "bot"}`
     - 質問チャット
-        - `{"message_type":"chat", "message": "どれが嘘ですか？", "sender": "user1"}`
+        - リクエスト
+            - `{"message_type":"chat", "message": "1番について語ってください", "sender": "user1"}`
+        - レスポンス
+            - `{"message_type":"chat", "message": "旅行が大好きです", "sender": "bot"}`
+    - 回答チャット
+        - リクエスト
+            - `{"message_type":"answer", "message": "1番が嘘ですね？", "sender": "user1"}`
+        - レスポンス
+            - `{"message_type":"result", "result": "success", "sender": "bot"}`
+            - resultは現在、ランダムで"success"か"faild"が返却されます。
 #### 参考
 https://apidog.com/jp/blog/how-to-test-websocket-with-postman/
 ## 実装ルール

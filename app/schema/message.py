@@ -31,3 +31,18 @@ class InitializeMessage(BaseMessage):
     # roomId: str = Field(..., description="どのゲームのルームに対してか") #まだ不要
     game_type: GameType = Field(..., description="何のゲームを開始するか")
     sender: str = Field(..., description="送信者名")
+
+
+class AnswerMessage(BaseMessage):
+    """ユーザーからの回答で送るメッセージのDTO"""
+
+    message: str = Field(..., description="回答のメッセージ")
+    sender: str = Field(..., description="送信者名")
+
+
+class ResultMessage(BaseMessage):
+    """ユーザーからの回答に対して、正誤判定を行った結果メッセージのDTO.基本的には、broadcastで送信しない"""
+
+    message_type: str = Field(..., description="返却用のメッセージタイプ")
+    result: str = Field(..., description="ゲームの結果")  # 他のゲームも考慮し、文字列型
+    sender: str = Field(..., description="送信者名")

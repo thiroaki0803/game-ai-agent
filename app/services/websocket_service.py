@@ -1,6 +1,7 @@
 """websocket関連のビジネスロジックを記載したサービスクラスを含むモジュール"""
 
 import logging
+import random
 from typing import Dict
 from pydantic import ValidationError
 from utils.enum import MessageType, LLMType
@@ -9,6 +10,8 @@ from schema.message import (
     ChatMessage,
     ResponseChatMessage,
     InitializeMessage,
+    AnswerMessage,
+    ResultMessage,
 )
 from domain.agent import AgentFactory, LLMAgent
 from core.connection import Connection
@@ -45,7 +48,7 @@ class WebsocketService:
             logger.info("message type is :%s", base_message.message_type)
             # TODO: ここは、色々悩みあり。
             # 1.roomごとに初期化して、別のゲームルームには知識を共有しないようにしないといけないはず。
-            # 2.利用するLLMの切り分けをどうするか。設定ファイルに書くか。クライアントからもらうか。(ゲームタイプは1が実装できていればクライアントからもらう)
+            # 2.利用するLLMの切り分けをどうするか。設定ファイルに書くか。クライアントからもらうか。
             match base_message.message_type:
                 case MessageType.INITIALIZATION:
                     initialization_message = InitializeMessage.model_validate_json(
@@ -83,6 +86,21 @@ class WebsocketService:
                     )
                     logger.info("response is :%s", res.model_dump_json())
                     await connection.broadcast(f"{res.model_dump_json()}")
+                case MessageType.ANSWER:
+                    chat_message = AnswerMessage.model_validate_json(message)
+                    # TODO: 正誤の判定方法については、まだ明確に仕様が決まっていないため、ランダムな値を返している。
+                    # blockchainから取得する予定。
+                    # LLMでやるのであれば、分類専用のAgentを間に挟んで、trueかfalseしか正確に返さないような調整をすればできそう
+                    result = "success" if random.randint(0, 1) == 1 else "faild"
+                    res = ResultMessage(
+                        message_type=MessageType.RESULT.value,
+                        result=result,
+                        sender="bot",
+                    )
+                    logger.info("response is :%s", res.model_dump_json())
+                    # TODO: 本来は、ユーザーごとに結果(勝ち負け)が異なるため、broadcastはしない
+                    await connection.broadcast(f"{res.model_dump_json()}")
+                    # TODO: ゲームを終了したら、Agentを破棄したほうがいい
                 case _:
                     logger.error(
                         "not suported message type :%s", base_message.message_type
