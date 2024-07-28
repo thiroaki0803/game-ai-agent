@@ -90,7 +90,7 @@ Postmanなどで、wsに接続確認し、messageの送受信ができればOK
             - `{"message_type":"answer", "message": "1番が嘘ですね？", "sender": "user1"}`
         - レスポンス
             - `{"message_type":"result", "result": "success", "sender": "bot"}`
-            - resultは現在、ランダムで"success"か"faild"が返却されます。
+            - resultは現在、ランダムで"success"か"failed"が返却されます。
 #### 参考
 https://apidog.com/jp/blog/how-to-test-websocket-with-postman/
 ## 実装ルール

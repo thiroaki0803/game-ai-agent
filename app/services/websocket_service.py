@@ -91,7 +91,7 @@ class WebsocketService:
                     # TODO: 正誤の判定方法については、まだ明確に仕様が決まっていないため、ランダムな値を返している。
                     # blockchainから取得する予定。
                     # LLMでやるのであれば、分類専用のAgentを間に挟んで、trueかfalseしか正確に返さないような調整をすればできそう
-                    result = "success" if random.randint(0, 1) == 1 else "faild"
+                    result = "success" if random.randint(0, 1) == 1 else "failed"
                     res = ResultMessage(
                         message_type=MessageType.RESULT.value,
                         result=result,
@@ -103,7 +103,7 @@ class WebsocketService:
                     # TODO: ゲームを終了したら、Agentを破棄したほうがいい
                 case _:
                     logger.error(
-                        "not suported message type :%s", base_message.message_type
+                        "not supported message type :%s", base_message.message_type
                     )
         except ValidationError as e:
             logger.error("Error processing message:%s", e)
