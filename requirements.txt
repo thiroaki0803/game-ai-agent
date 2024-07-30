@@ -7,3 +7,6 @@ openai
 langchain-community
 langchain
 langchainhub
+web3
+zksync2
+python-snarks
