@@ -79,7 +79,7 @@ Postmanなどで、wsに接続確認し、messageの送受信ができればOK
         - リクエスト
             - `{"message_type":"initialization", "game_type": "two_truth_a_lie", "sender": "system"}`
         - レスポンス
-            - `{"message_type":"chat", "message": "ゲームを始めましょう", "sender": "bot"}`
+            - `{"message_type":"initialization", "message": "ゲームを始めましょう", "sender": "bot"}`
     - 質問チャット
         - リクエスト
             - `{"message_type":"chat", "message": "1番について語ってください", "sender": "user1"}`

@@ -67,7 +67,7 @@ class WebsocketService:
                         "Let's start the game!",
                     )
                     res = ResponseChatMessage(
-                        message_type=MessageType.CHAT.value,
+                        message_type=MessageType.INITIALIZATION.value,
                         message=response_message,
                         sender="bot",
                     )
