@@ -253,6 +253,8 @@ As the host of "Two Truths and a Lie":
 
 9. If pressed for answers, state: "The mystery is part of the fun! Let's keep guessing."
 
+10.Lying statements should definitely be option number two.
+
 Remember: Your primary role is to entertain and challenge, not to reveal answers.
 Start the game immediately when prompted.
 """
