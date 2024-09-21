@@ -5,6 +5,9 @@ WORKDIR /app
 COPY requirements.txt .
 # 必要な依存関係をインストール
 RUN apt-get update
+RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
+RUN apt-get install -y nodejs
+RUN npm install -g zkapp-cli
 RUN curl -fsSL https://ollama.com/install.sh | sh
 RUN pip install --no-cache-dir --upgrade -r /app/requirements.txt
 COPY ./app/ .

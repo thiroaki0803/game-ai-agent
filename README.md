@@ -67,6 +67,26 @@ exit
 APIのコンテナに入り、スタート用のシェルを実行  
 ```
 docker exec -it game-ai-agent sh
+```
+MINA用のコントラクト操作用ファイルを実行する準備
+```
+cd app/libs/contracts
+# モジュールをインストール
+npm install
+# コントラクトの実行ファイルをビルド
+npm run build
+```
+
+keyファイルを配置
+```
+# それぞれのキーは管理者に確認してください
+app/libs/contracts/keys/contractKey/zkbot.json
+app/libs/contracts/keys/feepayerKey/zkbot.json
+```
+
+アプリケーションを実行
+```
+# /app配下で実行
 sh start.sh
 ```
 
@@ -87,7 +107,7 @@ Postmanなどで、wsに接続確認し、messageの送受信ができればOK
             - `{"message_type":"chat", "message": "旅行が大好きです", "sender": "bot"}`
     - 回答チャット
         - リクエスト
-            - `{"message_type":"answer", "message": "1番が嘘ですね？", "sender": "user1"}`
+            - `{"message_type":"answer", "message": "2", "sender": "user1"}`
         - レスポンス
             - `{"message_type":"result", "result": "success", "sender": "bot"}`
             - resultは現在、ランダムで"success"か"failed"が返却されます。
@@ -142,7 +162,7 @@ def func(arg1, arg2):
 │   │   └── __init__.py
 │   ├── services/ # アプリケーションのビジネスロジックが含まれる
 │   │   └── __init__.py
-│   ├── core/ # ドメインの管理や、固有のビジネスロジックが含まれる
+│   ├── domain/ # ドメインの管理や、固有のビジネスロジックが含まれる
 │   │   └── __init__.py
 │   ├── core/ # 設定ファイルなど、アプリ共有の設定などコアとなるファイルを定義する
 │   │   ├── __init__.py

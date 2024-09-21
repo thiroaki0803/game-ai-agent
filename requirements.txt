@@ -1,5 +1,5 @@
 fastapi
-uvicorn
+uvicorn[standard]
 pydantic
 pydantic_settings
 requests
@@ -7,6 +7,3 @@ openai
 langchain-community
 langchain
 langchainhub
-web3
-zksync2
-python-snarks

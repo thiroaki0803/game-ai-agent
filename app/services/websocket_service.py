@@ -5,6 +5,7 @@ import random
 from typing import Dict
 from pydantic import ValidationError
 from utils.enum import MessageType, LLMType
+from utils import subprocess
 from schema.message import (
     BaseMessage,
     ChatMessage,
@@ -20,6 +21,9 @@ logger = logging.getLogger(__name__)
 
 # TODO: 今は固定でルームIDを指定
 room_id = "YRHJE7tCpDtKzMnJNw3Fk48KVia4kzKU"
+
+# minaのワーカークラスで、処理を実行するための実行エイリアス
+MINA_DEPLOY_ALIAS = "zkbot"
 
 
 class WebsocketService:
@@ -66,6 +70,22 @@ class WebsocketService:
                     response_message = self.agents[room_id].initialize_theme(
                         "Let's start the game!",
                     )
+                    # TODO: 正解データをAIで数値に直す
+                    # 今はコントラクトのソースコードに固定で"2"を正解としてアップデートをかけている
+                    # correct_number = 2
+                    # result = subprocess.execute(
+                    #     "node",
+                    #     "libs/contracts/build/src/interact.js",
+                    #     str(correct_number),
+                    # )
+                    # 遅いし、毎回実行する必要なし。
+                    # result = subprocess.execute(
+                    #     "node",
+                    #     "libs/contracts/build/src/interact.js",
+                    #     MINA_DEPLOY_ALIAS,
+                    # )
+                    # logger.info("return code: %s", result.returncode)
+                    # logger.info("Successfully set the correct number.")
                     res = ResponseChatMessage(
                         message_type=MessageType.INITIALIZATION.value,
                         message=response_message,
@@ -88,13 +108,29 @@ class WebsocketService:
                     await connection.broadcast(f"{res.model_dump_json()}")
                 case MessageType.ANSWER:
                     chat_message = AnswerMessage.model_validate_json(message)
-                    # TODO: 正誤の判定方法については、まだ明確に仕様が決まっていないため、ランダムな値を返している。
+                    # NOTE: 回答は、クライアント側で証明を生成し、検証まで呼んでもらう
                     # blockchainから取得する予定。
                     # LLMでやるのであれば、分類専用のAgentを間に挟んで、trueかfalseしか正確に返さないような調整をすればできそう
-                    result = "success" if random.randint(0, 1) == 1 else "failed"
+                    # result = "success" if random.randint(0, 1) == 1 else "failed"
+                    # result = subprocess.execute(
+                    #     "node",
+                    #     "libs/contracts/build/src/verify.js",
+                    #     chat_message.message,
+                    # )
+                    output = subprocess.execute(
+                        "node",
+                        "libs/contracts/build/src/verify.js",
+                        MINA_DEPLOY_ALIAS,
+                        chat_message.message,
+                    )
+                    # 出力行の最後に結果を出力している
+                    lines = output.stdout.strip().splitlines()
+                    result = None
+                    if lines:
+                        result = lines[-1]
                     res = ResultMessage(
                         message_type=MessageType.RESULT.value,
-                        result=result,
+                        result="success" if result == "true" else "failed",
                         sender="bot",
                     )
                     logger.info("response is :%s", res.model_dump_json())
@@ -106,8 +142,8 @@ class WebsocketService:
                         "not supported message type :%s", base_message.message_type
                     )
         except ValidationError as e:
-            logger.error("Error processing message:%s", e)
+            logger.error("Error processing message validation error:%s", e)
         except NotImplementedError as e:
-            logger.error("Error processing message:%s", e)
+            logger.error("Error processing message not implemented error:%s", e)
         except Exception as e:
-            logger.error("Error processing message:%s", e)
+            logger.error("Error processing message error:%s", e)
